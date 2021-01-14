@@ -1,0 +1,38 @@
+* Tricks
+
+** Accessing every ports on a machine without external access (public IP) from internet.
+
+*** Requirements :
+    - a server with a public address (the gateway)
+    - a machine without external access (the target)
+    - a machine connected to the internet (the workstation that needs
+      to access the target)
+    - SSH must be installed on all the aforementioned machines
+    - [[https://sshuttle.readthedocs.io][sshuttle]] must be installed on the workstation
+    - Python must be installed on the target
+    
+
+*** Steps : 
+    1. Create a reverse shell from target to gateway
+       #+begin_src sh
+       SRC_PORT=6776
+       DST_PORT=22
+       DST_USER=$USER
+       DST_HOST=$GATEWAY_PUBLIC_IP
+
+       autossh -M  0 -N -o ServerAliveInterval=15 -R $SRC_PORT:localhost:$DST_PORT $DST_USER@$DST_HOST
+       #+end_src
+
+    2. Forward port 8998 on the workstation to port 6776 on the
+       gateway
+       #+begin_src sh
+       ssh -L 8998:localhost:6776 $USER@$GATEWAY_PUBLIC_IP
+       #+end_src
+
+    3. Use sshuttle to forward every port of the target on the
+       workstation
+       #+begin_src sh
+       /usr/bin/sshttle --dns --remote $USER@localhost:8998 0.0.0.0/0
+       #+end_src
+
+
